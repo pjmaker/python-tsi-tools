@@ -27,6 +27,8 @@ Setup
 
 #. Install ``numpydoc`` and add into the extensions list in
    ``conf.py''
+#. Install ``napoleon`` extension and enable it
 #. Add a reference to the various ``intro.rst`` and ``history.rst``
    into ``index.rst``
-#. Add ``numpydoc`` to the modules, e.g. ``tsi.py``.
+#. Add google doc to the modules, e.g. ``exdoc.py``.
+#. See ```exdoc.py'' for examples following the google conventions.
