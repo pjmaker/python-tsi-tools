@@ -20,7 +20,9 @@ Modules
 tsi
 ---
 
-This is useful.
+This is a useful module which I am currently
+describing in the index.rst file.
+
 
 .. automodule:: tsi
    :members:
