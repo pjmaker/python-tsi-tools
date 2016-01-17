@@ -11,6 +11,14 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   intro.rst
+   history.rst
+
+Modules
+=======
+
+.. automodule:: tsi
+   :members:
 
 
 Indices and tables
