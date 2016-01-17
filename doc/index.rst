@@ -17,6 +17,11 @@ Contents:
 Modules
 =======
 
+tsi
+---
+
+This is useful.
+
 .. automodule:: tsi
    :members:
 
