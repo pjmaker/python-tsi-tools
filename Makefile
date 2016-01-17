@@ -46,8 +46,10 @@ check:
 
 dist:
 
-docs:
+pdf:
 	sphinx-apidoc -f -o doc .
-	cat doc/tsi.rst
 	cd doc ; make latexpdf
+	cp doc/_build/latex/tsi.pdf .
+
+html:
 	cd doc ; make html
