@@ -6,9 +6,9 @@ Setup, conventions and tools
 Conventions
 -----------
 
-1. Use Python version 3
-1. Use the pandas, numpy,scipy and matplotlib
-1. Documentation and tests will in Sphinx using the google
+#. Use Python version 3
+#. Use the pandas, numpy,scipy and matplotlib
+#. Documentation and tests will in Sphinx using the google
    documentation format rather numpydoc (which in turn is better than
    Sphinx .rst).
 

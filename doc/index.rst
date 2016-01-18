@@ -13,19 +13,9 @@ Contents:
 
    intro.rst
    history.rst
-
-Modules
-=======
-
-tsi
----
-
-This is a useful module which I am currently
-describing in the index.rst file.
-
-
-.. automodule:: tsi
-   :members:
+   modules.rst
+   tsi.rst
+   exdoc.rst
 
 
 Indices and tables
