@@ -43,9 +43,12 @@ clean:
 distclean:
 
 check:
+	cd doc ; make doctest
 
 dist:
 
+apidoc:
+	sphinx-apidoc -f -o doc .
 pdf:
 	sphinx-apidoc -f -o doc .
 	cd doc ; make latexpdf
