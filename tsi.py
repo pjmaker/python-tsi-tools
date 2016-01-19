@@ -56,12 +56,14 @@ options = {
     '-trace':False,
     '-profile_main':False,
     '-show_options':False,
-    '-test': 1
+    '-test':1
 }
 
-# override with the real option
-if len(sys.argv[1:]) > 0:
-    options.update(dict([sys.argv[1:]]))
+print(sys.argv)
+if not sys.argv[0].endswith('sphinx-build'):
+    if len(sys.argv[1:]) > 0:
+        options.update(sys.argv[1:])
+
 
 # show the options if required
 if options['-show_options']:
