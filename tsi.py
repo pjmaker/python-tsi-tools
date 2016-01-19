@@ -59,7 +59,6 @@ options = {
     '-test':1
 }
 
-print(sys.argv)
 if not sys.argv[0].endswith('sphinx-build'):
     if len(sys.argv[1:]) > 0:
         options.update(sys.argv[1:])
