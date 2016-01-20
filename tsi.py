@@ -260,17 +260,17 @@ def tsevents():
 
 def tsstates():
     '''converts hists to [when, {var->what}] by remembering state
-
+    
     For example [a:[(100,1),(200,10)],b:[(10,-1),(250,-11)]]
     converts to [(10,{a:nan,b:-1}),(100,{a:1,b:-1}),(200,{a:10,b:-1}),
-                 (250,{a:10,b:-11})]
+    (250,{a:10,b:-11})]
                  
     Examples:
 
-        None yet till I redo it
+    None yet till I redo it
 
     Returns:
-    [when, {var->what}]: 
+    [when, {var->what}]: it expands the events into states
     '''
     global hists
     states = []
