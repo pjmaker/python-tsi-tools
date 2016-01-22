@@ -3,3 +3,4 @@ __pycache__
 doc/_build
 doc/_templates
 doc/_static
+data/*
