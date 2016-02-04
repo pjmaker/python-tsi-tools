@@ -44,37 +44,72 @@ Example:
 TODO:
    #. Break this apart into individual components
 '''
-
 
-
+import doctest
 import datetime
-import time
 import calendar
-import iso8601
-import math
-import statistics
 import glob
 import os
 import sys
-import pytz
+import argparse
+import cProfile
+import pstats
+from math import isnan
 
-import scipy as sp
-import pandas as pd
-import numpy as np
+import iso8601
+
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
-import tsioptions as opts
+import pandas as pd
+import numpy
+from numpy import nan
+from utc import utc
 
-opts.set({
-    '-trace':False,
-    '-profile_main':False,
-    '-show_options':True,
-    '-test':1
-})
+argparser = argparse.ArgumentParser()
+argparser.add_argument("-trace", action="store_true", default=False)
+argparser.add_argument("-profile_main", action="store_true", default=False)
+argparser.add_argument("-test", action="store_true", default=False)
+args = argparser.parse_args()
 
 # option setup
-plt.style.use('ggplot')
 pd.options.display.width = 500
+
+
+# regularise the data
+def regularise(series, freq, start=None, end=None):
+    """Take a time series of irregular data and reindex it so that it is a
+    regular time series.  Start and end timestamps can be specified.
+    Otherwise, the first and last timestamps in the series are used.
+
+    Examples:
+    >>> dates = pd.date_range('20130101', periods=6)
+    >>> numpy.random.seed(123)
+    >>> df = pd.DataFrame(numpy.random.randn(6,1), index=dates, columns=list('A'))
+    >>> regularise(df, freq='720Min')
+                                A
+    2013-01-01 00:00:00 -1.085631
+    2013-01-01 12:00:00 -1.085631
+    2013-01-02 00:00:00  0.997345
+    2013-01-02 12:00:00  0.997345
+    2013-01-03 00:00:00  0.282978
+    2013-01-03 12:00:00  0.282978
+    2013-01-04 00:00:00 -1.506295
+    2013-01-04 12:00:00 -1.506295
+    2013-01-05 00:00:00 -0.578600
+    2013-01-05 12:00:00 -0.578600
+    2013-01-06 00:00:00  1.651437
+    <BLANKLINE>
+    [11 rows x 1 columns]
+
+    """
+    if start is None:
+        start = series.index[0]
+    if end is None:
+        end = series.index[-1]
+    newindex = pd.date_range(start, end, freq=freq)
+    return series.reindex(newindex, method='ffill')
+
 
 # timestamp support
 def tparse(t):
@@ -87,36 +122,30 @@ def tparse(t):
       timeStamp: if t is correct, otherwise fails
 
     Examples:
-      >>> import tsi
-      >>> print(tsi.tparse('2001-09-09T01:46:40+00:00'))
-      1000000000.0
+    >>> tparse('2001-09-09T01:46:40+00:00')
+    1000000000.0
 
-      >>> import tsi
-      >>> print(tsi.tparse('2001-09-09T01:46:40Z'))
-      1000000000.0
+    >>> tparse('2001-09-09T01:46:40Z')
+    1000000000.0
 
-      >>> import tsi
-      >>> print(tsi.tparse('20010909T014640Z'))
-      1000000000.0
+    >>> tparse('20010909T014640Z')
+    1000000000.0
 
-      >>> import tsi
-      >>> print(tsi.tparse('2001-09-09T01:46:40.123+00:00'))
-      1000000000.123
+    >>> tparse('2001-09-09T01:46:40.123+00:00')
+    1000000000.123
 
-      >>> import tsi
-      >>> print(tsi.tparse('2001-09-09 01:46:40.123+00:00'))
-      1000000000.123
+    >>> tparse('2001-09-09 01:46:40.123+00:00')
+    1000000000.123
 
-      >>> import tsi
-      >>> print(tsi.tparse('2001-09-09 01:46:40.978612+0000'))
-      1000000000.978612
+    >>> tparse('2001-09-09 01:46:40.978612+0000')
+    1000000000.978612
 
-      >>> import tsi
-      >>> print(tsi.tparse('2099-09-09 01:46:40.978612+0000'))
-      4092601600.978612
+    >>> tparse('2099-09-09 01:46:40.978612+0000')
+    4092601600.978612
     '''
-    return iso8601.parse_date(t).timestamp()
-    # return np.datetime64(t)
+    dt = iso8601.parse_date(t)
+    return calendar.timegm(dt.timetuple()) + dt.microsecond / 1000000.
+
 
 def tformat(s):
     '''convert a float of seconds since epoch to an ISO8601 date
@@ -131,50 +160,41 @@ def tformat(s):
       str: formatted time
 
     Examples:
-      >>> import tsi
-      >>> print(tsi.tformat(1000000000.0))
-      2001-09-09T01:46:40+00:00
+    >>> tformat(0)
+    '1970-01-01T00:00:00+00:00'
 
-      >>> import tsi
-      >>> print(tsi.tformat(1000000000.988))
-      2001-09-09T01:46:40.988000+00:00
+    >>> tformat(1000000000.0)
+    '2001-09-09T01:46:40+00:00'
 
-      Note that we get representation errors in the following
-      two tests.
+    >>> tformat(1000000000.988)
+    '2001-09-09T01:46:40.988000+00:00'
 
-      !>>> import tsi
-      !>>> print(tsi.tformat(1000000000.989))
-      2001-09-09T01:46:40.989000+00:00
+    >>> tformat(1000000000.989)
+    '2001-09-09T01:46:40.989000+00:00'
 
-      !>>> import tsi
-      !>>> print(tsi.tformat(tsi.tparse('2001-09-09T01:46:40.989000+00:00')))
-      2001-09-09T01:46:40.989000+00:00
+    >>> tformat(tparse('2001-09-09T01:46:40.989000+00:00'))
+    '2001-09-09T01:46:40.989000+00:00'
     '''
-    return datetime.datetime.fromtimestamp(round(s, 3),
-                                           pytz.UTC).isoformat('T')
+    return datetime.datetime.fromtimestamp(round(s, 3), utc).isoformat('T')
 
-def tdsecs(td):
+
+def tdsecs(td64):
     '''convert a timedelta to a number in seconds
 
     Args:
-      ts (timedelta): a timedelta from pandas/numpy
+      td64 (timedelta64): a timedelta from pandas
 
     Returns:
       float: representation in seconds of delta
 
     Examples:
-       None
-
+    >>> import numpy
+    >>> delta = numpy.timedelta64(487993014000000000,'ns')
+    >>> tdsecs(delta)
+    487993014.0
     '''
+    return td64 / numpy.timedelta64(1, 's')
 
-    return (td / np.timedelta64(1, 's'))
-
-# support for nan
-from math import isnan
-nan = float('nan')
-'''float: just nan for us to use'''
-
-# support for reading data in
 
 hists = {}
 '''{var->[(when, what)]}: history of var as a list of (when, what) events
@@ -182,6 +202,7 @@ hists = {}
 This is used as the basic representation for history of variables
 before we mangle it into the various pandas DataFrame representations.
 '''
+
 
 def tsvars():
     '''returns variables we have history for
@@ -191,53 +212,58 @@ def tsvars():
     '''
     return sorted(hists)
 
-def tsread(fn):
-    '''read file fn and convert [(when, what)...]
+
+def tsread(filename):
+    '''read file and convert [(when, what)...]
 
     Args:
-      fn (str): filename to read which is in ASIM format
+      filename (str): filename to read which is in ASIM format
 
     Returns:
-      [(when,what)]: list of when, what events
+      [(when,what)]: list of (when, what) events
+
+    >>> tsread('data/Test1.csv')
+    [(946650600.0, nan), (1434643614.0, nan), (1434644040.0, 20.0), (1434644050.0, nan), (1437236054.535, 50.0), (1437236070.535, nan)]
     '''
-    print('tsread ' + fn)
-    n = 1
     r = []
-    for s in open(fn):
-        t, v = s.split(',')
-        if n == 1: # skip the header line
-            assert t == 't'
-            # v is whatever,we don't check
+    for lineno, line in enumerate(open(filename)):
+        tstamp, value = line.split(',')
+        if lineno == 0:
+            # skip the header line
+            assert tstamp == 't'
+            # v is whatever, we don't check
         else:
-            t = tparse(t)
-            v = float(v)
+            t = tparse(tstamp)
+            v = float(value)
             r.append((t, v))
-        n += 1
     return r
 
-def tsreadfiles(pat, rename):
-    '''Read all files matching glob pat and rename var using rename
 
-    Args:
+def tsreadfiles(pattern):
+    '''Read all files matching glob pattern and map filename to variable
+    name using fntovar.
 
-    pat (str): glob pattern for matching files
-    rename (hook): function renaming variables from file to varname
-
-    Returns:
-    nothing
+    >>> tsreadfiles('data/Test1.csv')
+    >>> len(hists)
+    1
+    >>> hists['Test1']
+    [(946650600.0, nan), (1434643614.0, nan), (1434644040.0, 20.0), (1434644050.0, nan), (1437236054.535, 50.0), (1437236070.535, nan)]
     '''
-    global hists
-    for fn in glob.glob(pat):
-        var = rename(fn)
-        hists[var] = tsread(fn)
+    for filename in glob.glob(pattern):
+        varname = fntovar(filename)
+        hists[varname] = tsread(filename)
+
 
 def tsevents():
     '''converts hists[] to [(when, var, what)...]
 
     Returns:
     [(when, var, what)]: similar to an alarm log
+
+    >>> tsreadfiles('data/Test1.csv')
+    >>> tsevents()
+    [(946650600.0, 'Test1', nan), (1434643614.0, 'Test1', nan), (1434644040.0, 'Test1', 20.0), (1434644050.0, 'Test1', nan), (1437236054.535, 'Test1', 50.0), (1437236070.535, 'Test1', nan)]
     '''
-    global hists
     events = []
     for var in sorted(hists):
         for (when, what) in hists[var]:
@@ -245,6 +271,7 @@ def tsevents():
     events.sort()
     # print('tsevents = ', events)
     return events
+
 
 def tsstates():
     '''converts hists to [when, {var->what}] by remembering state
@@ -263,7 +290,6 @@ def tsstates():
     Returns:
     [when, {var->what}]: it expands the events into states
     '''
-    global hists
     states = []
     state = {}
     for v in hists:
@@ -275,49 +301,80 @@ def tsstates():
             states.append((when, state.copy()))
     return states
 
+
 def ts2csv(fd):
     '''print ts stat to fd'''
     ts2csvheader(fd)
     ts2csvbody(fd)
 
+
 def ts2csvheader(fd):
     '''print the header line'''
-    print('t', end=',', file=fd)
+    print >>fd, 't,',
     for i in tsvars():
-        print(i, end=',', file=fd)
-    print('Remarks', file=fd)
+        print >>fd, str(i) + ',',
+    print >>fd, 'Remarks'
+
 
 def ts2csvbody(fd):
     '''print the body'''
     for (when, state) in tsstates():
-        print(tformat(when), end=',', file=fd)
+        print >>fd, tformat(when) + ',',
         for v in tsvars():
-            print(state[v], end=',', file=fd)
-        print('', file=fd)
+            print >> fd, str(state[v]) + ',',
+        print >>fd
+
 
 def limit(v, low, high):
-    '''limit v between low and high'''
+    '''limit v between low and high
+
+    >>> limit(4, 10, 20)
+    10
+    >>> limit(24, 10, 20)
+    20
+    '''
     return max(min(v, high), low)
 
+
 def scale(v, p=1):
-    '''scale v by p'''
+    '''scale v by p
+
+    >>> scale(10)
+    10
+    >>> scale(10, 2)
+    20
+    '''
     return v*p
 
+
 def offset(v, o=0):
-    '''offset v by o'''
+    '''offset v by o
+    >>> offset(10)
+    10
+    >>> offset(10, 2)
+    12
+    '''
     return v+o
 
+
 def fntovar(fn):
-    '''Convert filename to variable name'''
+    '''Convert filename to variable name
+
+    Examples:
+    >>> fntovar('data/R_K_PG_BULM_StatPwrSupplyFailAl_1JAN2000_now.csv')
+    'StatPwrSupplyFailAl'
+    '''
     fn = fn.replace('data/', '')
     fn = fn.replace('R_K_PG_BULM_', '')
     fn = fn.replace('_1JAN2000_now', '')
     fn = fn.replace('.csv', '')
     return fn
 
+
 def tsmean(df, v):
     '''Return the time weighted average for v in DataFrame df'''
     return df['w' + v].sum()/df['t' + v].sum()
+
 
 def tssummary(df, v):
     '''Return a summary of the variable v in dataframe df.'''
@@ -327,18 +384,39 @@ def tssummary(df, v):
     s += str(df[v].max())
     return s
 
+
 def getdf(pats):
     '''Return DataFrame from files matching members of pats.
 
     pats - list of glob style pattern matching the files to process.
+
+    >>> getdf(['data/*.csv'])
+                                Test1  Test2  Remarks
+    t                                                
+    1999-12-31 14:30:00           NaN    NaN      NaN
+    1999-12-31 14:30:00           NaN    NaN      NaN
+    2015-06-18 16:06:54           NaN    NaN      NaN
+    2015-06-18 16:06:54           NaN    NaN      NaN
+    2015-06-18 16:14:00            20    NaN      NaN
+    2015-06-18 16:14:02            20    120      NaN
+    2015-06-18 16:14:10           NaN    120      NaN
+    2015-06-18 16:14:12.010000    NaN    NaN      NaN
+    2015-07-18 16:14:14.535000     50    NaN      NaN
+    2015-07-18 16:14:16.535000     50      5      NaN
+    2015-07-18 16:14:30.535000    NaN      5      NaN
+    2015-07-18 16:14:30.535000    NaN    NaN      NaN
+    <BLANKLINE>
+    [12 rows x 3 columns]
     '''
+    assert isinstance(pats, list), 'argument must be a list'
+    hists.clear()
     for pat in pats:
-        tsreadfiles(pat, fntovar)
-    ts2csv(open('tmpdata.csv', 'w'))
-    # pylint does not seem to understand what a dataframe is
-    # whence we need to disable the check
-    # pylint:disable=maybe-no-member
-    return pd.read_csv('tmpdata.csv', parse_dates=['t']).set_index('t')
+        tsreadfiles(pat)
+    f = open('tmpdata.csv', 'w')
+    ts2csv(f)
+    f.close()
+    return pd.read_csv('tmpdata.csv', parse_dates=['t'], index_col='t', skipinitialspace=True)
+
 
 def makedt(df):
     '''Return a dataframe with new dt, w* and t* Series.
@@ -348,23 +426,48 @@ def makedt(df):
     df['dt'] - the difference in time between this samples.
     df['w' + var] - the time weighted value for var.
     df['t' + var] - the dt for var if it is not nan otherwise 0
+
+    >>> df = getdf(['data/*.csv'])
+    >>> makedt(df)
+                                Test1  Test2  Remarks            dt        wTest1       tTest1  wTest2  tTest2
+    t                                                                                                         
+    1999-12-31 14:30:00           NaN    NaN      NaN  0.000000e+00           NaN        0.000     NaN       0
+    1999-12-31 14:30:00           NaN    NaN      NaN  0.000000e+00           NaN        0.000     NaN       0
+    2015-06-18 16:06:54           NaN    NaN      NaN  4.879930e+08           NaN        0.000     NaN       0
+    2015-06-18 16:06:54           NaN    NaN      NaN  0.000000e+00           NaN        0.000     NaN       0
+    2015-06-18 16:14:00            20    NaN      NaN  4.260000e+02  8.520000e+03      426.000     NaN       0
+    2015-06-18 16:14:02            20    120      NaN  2.000000e+00  4.000000e+01        2.000     240       2
+    2015-06-18 16:14:10           NaN    120      NaN  8.000000e+00           NaN        0.000     960       8
+    2015-06-18 16:14:12.010000    NaN    NaN      NaN  2.010000e+00           NaN        0.000     NaN       0
+    2015-07-18 16:14:14.535000     50    NaN      NaN  2.592003e+06  1.296001e+08  2592002.525     NaN       0
+    2015-07-18 16:14:16.535000     50      5      NaN  2.000000e+00  1.000000e+02        2.000      10       2
+    2015-07-18 16:14:30.535000    NaN      5      NaN  1.400000e+01           NaN        0.000      70      14
+    2015-07-18 16:14:30.535000    NaN    NaN      NaN  0.000000e+00           NaN        0.000     NaN       0
+    <BLANKLINE>
+    [12 rows x 8 columns]
     '''
-    print('makedt')
     df['tvalue'] = df.index
-    df['dt'] = (df['tvalue']-df['tvalue'].shift()).fillna(0).shift(-1)
-    df['dt'] = df['dt'].apply(tdsecs)
+    df['dt'] = df.tvalue - df.tvalue.shift()
+    df.dt = df.dt.fillna(0)
+    df.dt.shift(-1)
+    df.dt = df.dt.apply(tdsecs)
     del df['tvalue']
-    f = lambda x: 0 if isnan(x[0]) else x[1]
+
+    def f(x):
+        """NaNs should never be seen."""
+        return 0 if isnan(x[0]) else x[1]
+
     for v in tsvars():
         df['w' + v] = df[v] * df['dt']
         df['t' + v] = df[[v, 'dt']].apply(f, axis=1)
     return df
-
+
 # wrappers for plot
 
-from matplotlib.backends.backend_pdf import PdfPages
 
 def plotPdf(fn, **kwopts):
+    """Plot a pdf."""
+
     print('plotPdf ' + fn)
     pp = PdfPages(fn)
     year = 2015
@@ -373,7 +476,7 @@ def plotPdf(fn, **kwopts):
         dmax = calendar.monthrange(year, month)[1]
         for day in range(1, dmax-1):
             title = str(year) + '-' + str(month) + '-' + str(day)
-            print(' plotPdf ' +  title)
+            print(' plotPdf ' + title)
             global df
             for v in tsvars():
                 df[v].plot(kind='line',
@@ -385,36 +488,34 @@ def plotPdf(fn, **kwopts):
             pp.savefig()
     pp.close()
     os.system('evince ' + fn)
-
+
 # trace code
 #
 # TODO: update to a better tracer sometime
 #
 
-if opts.get('-trace'):
-    import sys
+if args.trace:
 
     def tracer(frame, event, arg, indent=[0]):
         # print('tracer', event)
         func = frame.f_code.co_name
-        file = frame.f_code.co_filename
-        if func[0] == '_' or file[0] == '/':
+        filename = frame.f_code.co_filename
+        if func[0] == '_' or filename[0] == '/':
             return
         if event == "call":
             indent[0] += 2
             print("-" * indent[0] + "> call function",
-                  func + ':' + file)
+                  func + ':' + filename)
         elif event == "return":
             print("<" + "-" * indent[0], "exit function",
-                  func + ':' + file)
+                  func + ':' + filename)
         indent[0] -= 2
         return tracer
 
     sys.setprofile(tracer)
-
+
 # profile support
-import cProfile
-import pstats
+
 
 def profile(c):
     '''profile code c
@@ -424,71 +525,40 @@ def profile(c):
     cProfile.run('main()', 'tm-stats')
     p = pstats.Stats('tm-stats')
     p.sort_stats('cumulative').print_stats(20)
-
-# some 1 liners for testing
-def showeval(s):
-    '''print a string followed by its evaluation
 
-    Note that python does not have an uplevel(3tcl) command
-    like TCL and so need to use globals or the locals=dict
-    argument. There must be a better way.
-    '''
-    print(s, '->', eval(s))
-
-def main():
-    '''Do the work'''
-    test1_2()
 
 def test1():
-    '''run a simple test
-
-    Note
     '''
-    print('* test1() - basic input and statistics for 1 series')
-    global df # we need global dataframe so showeval can see it.
-    df = {}
-    print('** read data/Test1.csv see contents below')
-    print(open('data/Test1.csv').read())
-    print("df = makedt(getdf(['data/Test1.csv']))")
-    df = makedt(getdf(['data/Test1.csv']))
-    showeval("print(df)")
-    showeval("print(df.describe())")
-    print('** statistics - N.B. weighting seems odd')
-    showeval("df['Test1'].mean() # wrongas expected")
-    showeval("df['Test1'].mean(weighted=df['dt']) # wrong")
-    showeval("df['Test1'].mean(weighted=df['tTest1']) # wrong")
-    showeval("(df['Test1']*df['tTest1']).sum()/df['tTest1'].sum() # ok")
-    showeval("tsmean(df,'Test1')")
+    run a simple test
 
-def test1_2():
-    '''run a simple test
+    test1() - basic input and statistics for 1 series'
 
-    Note
+    ** read data/Test1.csv see contents below
+
+    >>> df = makedt(getdf(['data/Test1.csv']))
+    >>> print(df)
+                                Test1  Remarks            dt        wTest1       tTest1
+    t                                                                                  
+    1999-12-31 14:30:00           NaN      NaN  0.000000e+00           NaN        0.000
+    2015-06-18 16:06:54           NaN      NaN  4.879930e+08           NaN        0.000
+    2015-06-18 16:14:00            20      NaN  4.260000e+02  8.520000e+03      426.000
+    2015-06-18 16:14:10           NaN      NaN  1.000000e+01           NaN        0.000
+    2015-07-18 16:14:14.535000     50      NaN  2.592005e+06  1.296002e+08  2592004.535
+    2015-07-18 16:14:30.535000    NaN      NaN  1.600000e+01           NaN        0.000
+    <BLANKLINE>
+    [6 rows x 5 columns]
+    >>> df['Test1'].mean()
+    35.0
+    >>> df['Test1'].mean(weighted=df['dt'])
+    35.0
+    >>> df['Test1'].mean(weighted=df['tTest1'])
+    35.0
+    >>> (df['Test1']*df['tTest1']).sum()/df['tTest1'].sum()
+    49.995070263280937
+    >>> tsmean(df,'Test1')
+    49.995070263280937
     '''
-    print('* test1_2() - basic input and statistics for 2 series')
-    global df # we need global dataframe so showeval can see it
-    df = {}
-    print('** read data/Test1.csv and data/Test2.csv see contents below')
-    print(open('data/Test1.csv').read())
-    print(open('data/Test2.csv').read())
-    print("df = makedt(getdf(['data/Test1.csv','data/Test2.csv']))")
-    df = makedt(getdf(['data/Test1.csv', 'data/Test2.csv']))
-    showeval("print(df)")
-    showeval("print(df.describe())")
-    print('** statistics - N.B. weighting seems odd')
-    showeval("df['Test1'].mean() # wrongas expected")
-    showeval("df['Test1'].mean(weighted=df['dt']) # wrong")
-    showeval("df['Test1'].mean(weighted=df['tTest1']) # wrong")
-    showeval("(df['Test1']*df['tTest1']).sum()/df['tTest1'].sum() # ok")
-    showeval("tsmean(df,'Test1')")
-    showeval("df['Test2'].mean() # wrongas expected")
-    showeval("df['Test2'].mean(weighted=df['dt']) # wrong")
-    showeval("df['Test2'].mean(weighted=df['tTest2']) # wrong")
-    showeval("(df['Test2']*df['tTest2']).sum()/df['tTest2'].sum() # ok")
-    showeval("tsmean(df,'Test2')")
 
-def rest2():
-    df = makedt(getdf(['data/*SkyCam1*','data/*Fed3Pact*']))
 
 def rest():
     '''Just a block to keep scrap code in'''
@@ -505,7 +575,6 @@ def rest():
 
         # # df['SkyCam2_2mOk'] = df['SkyCam2_2mOk'].apply(lambda x: limit(x,0,1))
         # # df['SkyCam3_2mOk'] = df['SkyCam3_2mOk'].apply(lambda x: limit(x,0,1))
-
 
         # do some basic statistics
         if False:
@@ -532,14 +601,14 @@ def rest():
 
                                 if False:
                                     plotPdf('daily.pdf')
-
-
                                 # df.csv_export('dataexport.csv')
 
-
-# finally call main (or profile it)
+# # finally call main (or profile it)
 if __name__ == '__main__':
-    if opts.get('-profile_main'):
+    if args.profile_main:
         profile('main()')
+    elif args.test:
+        doctest.testmod()
     else:
-        main()
+        argparser.print_usage()
+        exit(0)
