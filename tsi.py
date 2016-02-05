@@ -76,8 +76,8 @@ args = argparser.parse_args()
 pd.options.display.width = 500
 
 
-# regularise the data
-def regularise(series, freq, start=None, end=None):
+# resample the data
+def resample(series, freq, start=None, end=None):
     """Take a time series of irregular data and reindex it so that it is a
     regular time series.  Start and end timestamps can be specified.
     Otherwise, the first and last timestamps in the series are used.
@@ -86,7 +86,7 @@ def regularise(series, freq, start=None, end=None):
     >>> dates = pd.date_range('20130101', periods=6)
     >>> numpy.random.seed(123)
     >>> df = pd.DataFrame(numpy.random.randn(6,1), index=dates, columns=list('A'))
-    >>> regularise(df, freq='720Min')
+    >>> resample(df, freq='720Min')
                                 A
     2013-01-01 00:00:00 -1.085631
     2013-01-01 12:00:00 -1.085631
