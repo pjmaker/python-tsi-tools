@@ -14,7 +14,7 @@ argparser.add_argument('filename')
 argparser.add_argument('start')
 argparser.add_argument('end')
 argparser.add_argument("-r", type=str, default='1h',
-                       help='Resolution n[smh] [default: 5m]')
+                       help='Resolution n[smh] [default: 1h]')
 argparser.add_argument('--sampling', type=str, default='last',
                        choices=['min', 'max', 'last', 'or'])
 args = argparser.parse_args()
