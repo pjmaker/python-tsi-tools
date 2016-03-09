@@ -39,7 +39,7 @@ t2 = iso8601.parse_date(args.end)
 assert t < t2, 'start time must come before end time'
 
 while t < t2:
-    fn = sample.switch[args.func]
+    fn = sample.switch[args.sampling]
     rows = df[t:t + deltat]
     s = '%s, %s' % (t.isoformat(), fn(rows))
     s = re.sub("  ", " ", s)
