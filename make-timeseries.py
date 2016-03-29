@@ -13,14 +13,13 @@ import tags
 
 parser = argparse.ArgumentParser(description='Process timestamped data')
 argparser = argparse.ArgumentParser()
-argparser.add_argument('filename')
-argparser.add_argument('pitag')
-argparser.add_argument('start')
-argparser.add_argument('end')
 argparser.add_argument("-r", type=str, default='1h',
                        help='Resolution n[smh] [default: 1h]')
 argparser.add_argument('--sampling', type=str, default='last',
                        choices=['min', 'max', 'last', 'or'])
+argparser.add_argument('start')
+argparser.add_argument('end')
+argparser.add_argument('filenames', nargs='+')
 args = argparser.parse_args()
 
 # Compute time delta.
@@ -34,29 +33,45 @@ elif args.r[-1] is 'h':
 else:
     raise ValueError('invalid specification %s' % args.r)
 
-df = pd.read_csv(args.filename, parse_dates=True, index_col=0)
-df.sort()
-assert df.shape[1] == 1
+dataframes = []
+siteid = None
+
+for fname in args.filenames:
+    fields = fname.split('_')
+    assert len(fields) >= 4, "ill-formed filename %s" % fname
+    pitag = fields[4]
+    if siteid is None:
+        # first file sets the site ID
+        siteid = fields[3]
+    else:
+        # make sure every CSV file belongs to the same site
+        assert siteid == fields[3], 'site %s != %s' % (fields[3], siteid)
+    tag = tags.transform(pitag)
+    df = pd.read_csv(fname, parse_dates=True, index_col=0)
+    assert df.shape[1] == 1
+    df.sort()
+    dataframes.append((tag, df))
 
 t = iso8601.parse_date(args.start)
 t2 = iso8601.parse_date(args.end)
 assert t < t2, 'start time must come before end time'
 
-month = t.month
-year = t.year
-tag, res = tags.transform(args.pitag)
-filename = files.filename(month, year, res)
+filename = files.filename(siteid, t.month, t.year, args.r)
 print 'creating', filename
 
 f = open(filename, 'w')
-print >>f, "t,", tag
+print >>f, "t," + ','.join([tag for tag, _ in dataframes])
 
+fn = sample.switch[args.sampling]
 while t < t2:
-    fn = sample.switch[args.sampling]
-    rows = df[t:t + deltat]
-    s = '%s, %s' % (t.isoformat(), fn(rows))
+    s = "%s," % t.isoformat()
+    for (_, df) in dataframes:
+        rows = df[t:t + deltat]
+        s += '%s,' % fn(rows)
+    # a bit of cleanup before printing
     s = re.sub("  ", " ", s)
-    s = re.sub(", nan", ", NaN", s)
+    s = re.sub(",nan", ",NaN", s)
+    s = re.sub(",$", "", s)
     print >>f, s
     t += deltat
 f.close()
