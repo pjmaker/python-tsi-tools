@@ -1,6 +1,11 @@
 # make-timeseries.py -- process timestamp data into regular time series data
 # Copyright 2016 Ben Elliston
 
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+
 import pandas as pd
 import sample
 import re
