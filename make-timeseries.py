@@ -99,7 +99,7 @@ while t < t2:
         s += '%s,' % fn(rows)
     # a bit of cleanup before printing
     s = re.sub("  ", " ", s)
-    s = re.sub(",nan", ",NaN", s)
+    s = re.sub(",(nan|NaN)", ",", s)
     s = re.sub(",$", "", s)
     print >>f, s
     t += deltat
