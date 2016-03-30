@@ -1,6 +1,11 @@
 # sample.py -- various sampling methods for a bucket of observations
 # Copyright 2016 Ben Elliston
 
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+
 import pandas as pd
 import numpy as np
 
@@ -10,6 +15,21 @@ sample = pd.DataFrame({'A': [1, 3, 5, np.nan, 6, 8]})
 empty = pd.DataFrame([])
 
 nan = float('nan')
+
+
+def avgsample(df):
+    """
+    Return the average value in the data frame.
+
+    >>> avgsample(empty)
+    nan
+    >>> round(avgsample(sample), 1)
+    4.6
+    """
+    if len(df) == 0:
+        return nan
+    else:
+        return np.mean(df.iloc[::, 0])
 
 
 def minsample(df):
