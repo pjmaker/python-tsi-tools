@@ -17,7 +17,9 @@ import tags
 
 PROJECT_NUMBER = 'CAR001'
 PROJECT_NAME = 'SETuP'
-DATA_FREQUENCY = {'60m': 'LOWRES', '1h': 'LOWRES', '15m': 'MEDRES', '5s': 'HIRES'}
+DATA_FREQUENCY = {'60m': 'LOWRES', '1h': 'LOWRES', '15m': 'MEDRES',
+                  '5s': 'HIRES'}
+
 
 def mkfilename(siteid, month, year, res):
     """
@@ -33,7 +35,8 @@ def mkfilename(siteid, month, year, res):
     try:
         res = DATA_FREQUENCY[res]
     except KeyError:
-        raise KeyError('valid resolutions are %s' % ', '.join(DATA_FREQUENCY.keys()))
+        raise KeyError('valid resolutions are %s' %
+                       ', '.join(DATA_FREQUENCY.keys()))
     return '%s_%s_%s_%02d%02d_%s.csv' % (PROJECT_NUMBER, PROJECT_NAME,
                                          siteid, year % 100, month, res)
 
@@ -42,7 +45,7 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument("-r", type=str, default='1h',
                        help='Resolution n[smh] [default: 1h]')
 argparser.add_argument('--sampling', type=str, default='last',
-                       choices=['min', 'max', 'last', 'or'])
+                       choices=['min', 'max', 'last', 'avg', 'or'])
 argparser.add_argument('start')
 argparser.add_argument('end')
 argparser.add_argument('filenames', nargs='+')
@@ -86,7 +89,7 @@ filename = mkfilename(siteid, t.month, t.year, args.r)
 print 'creating', filename
 
 f = open(filename, 'w')
-print >>f, "t," + ','.join([tag for tag, _ in dataframes])
+print >>f, "t," + ','.join([tg for tg, _ in dataframes])
 
 fn = sample.switch[args.sampling]
 while t < t2:
