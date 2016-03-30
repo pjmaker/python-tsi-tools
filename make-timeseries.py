@@ -93,7 +93,7 @@ print >>f, "t," + ','.join([tg for tg, _ in dataframes])
 
 fn = sample.switch[args.sampling]
 while t < t2:
-    s = "%s," % t.isoformat()
+    s = "%s," % t.strftime("%Y/%m/%d %H:%M:%S")
     for (_, df) in dataframes:
         rows = df[t:t + deltat]
         s += '%s,' % fn(rows)
