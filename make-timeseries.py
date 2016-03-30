@@ -8,8 +8,29 @@ import iso8601
 import argparse
 from datetime import timedelta
 
-import files
 import tags
+
+PROJECT_NUMBER = 'CAR001'
+PROJECT_NAME = 'SETuP'
+DATA_FREQUENCY = {'60m': 'LOWRES', '1h': 'LOWRES', '15m': 'MEDRES', '5s': 'HIRES'}
+
+def mkfilename(siteid, month, year, res):
+    """
+    Filename convention as follows:
+    [PROJECT NUMBER]_[PROJECT NAME]_[YYMM]_[DATA FREQUENCY].csv
+
+    >>> mkfilename('BULM', 1, 2016, 'high')
+    'CAR001_SETuP_BULM_1601_HIRES.csv'
+    """
+
+    assert year >= 1900
+    assert month > 0 and month < 13
+    try:
+        res = DATA_FREQUENCY[res]
+    except KeyError:
+        raise KeyError('valid resolutions are %s' % ', '.join(DATA_FREQUENCY.keys()))
+    return '%s_%s_%s_%02d%02d_%s.csv' % (PROJECT_NUMBER, PROJECT_NAME,
+                                         siteid, year % 100, month, res)
 
 parser = argparse.ArgumentParser(description='Process timestamped data')
 argparser = argparse.ArgumentParser()
@@ -56,7 +77,7 @@ t = iso8601.parse_date(args.start)
 t2 = iso8601.parse_date(args.end)
 assert t < t2, 'start time must come before end time'
 
-filename = files.filename(siteid, t.month, t.year, args.r)
+filename = mkfilename(siteid, t.month, t.year, args.r)
 print 'creating', filename
 
 f = open(filename, 'w')
