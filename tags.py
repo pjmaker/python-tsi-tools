@@ -252,6 +252,7 @@ tags = {
     'Gen1I1Act': None,					# generator 1 phase 1 actual current
     'Gen1I2Act': None,					# generator 1 phase 2 actual current
     'Gen1I3Act': None,					# generator 1 phase 3 actual current
+    'Gen1IAct': 'Igen1_A',				# FIXME: this tag doesn't exist yet.
     'Gen1InternalError7': None,				# generator 1 internal error 7 (magic?)
     'Gen1KwhTot': 'Egen1_kWh',				# generator 1 kwh total
     'Gen1LastStartMd': None,				# generator 1 last start mode
@@ -342,6 +343,7 @@ tags = {
     'Gen2I1Act': None,					# generator 2 phase 1 actual current
     'Gen2I2Act': None,					# generator 2 phase 2 actual current
     'Gen2I3Act': None,					# generator 2 phase 3 actual current
+    'Gen2IAct': 'Igen2_A',				# FIXME: this tag doesn't exist yet.
     'Gen2InternalError7': None,				# generator 2 internal error 7 (magic?)
     'Gen2KwhTot': 'Egen2_kWh',				# generator 2 kwh total
     'Gen2LastStartMd': None,				# generator 2 last start mode
@@ -432,6 +434,7 @@ tags = {
     'Gen3I1Act': None,					# generator 3 phase 1 actual current
     'Gen3I2Act': None,					# generator 3 phase 2 actual current
     'Gen3I3Act': None,					# generator 3 phase 3 actual current
+    'Gen3IAct': 'Igen3_A',				# FIXME: this tag doesn't exist yet.
     'Gen3InternalError7': None,				# generator 3 internal error 7 (magic?)
     'Gen3KwhTot': 'Egen3_kWh',				# generator 3 kwh total
     'Gen3LastStartMd': None,				# generator 3 last start mode
@@ -522,6 +525,7 @@ tags = {
     'Gen4I1Act': None,					# generator 4 phase 1 actual current
     'Gen4I2Act': None,					# generator 4 phase 2 actual current
     'Gen4I3Act': None,					# generator 4 phase 3 actual current
+    'Gen4IAct': 'Igen4_A',				# FIXME: this tag doesn't exist yet.
     'Gen4InternalError7': None,				# generator 4 internal error 7 (magic?)
     'Gen4KwhTot': 'Egen4_kWh',				# generator 4 kwh total
     'Gen4LastStartMd': None,				# generator 4 last start mode
