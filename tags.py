@@ -207,7 +207,7 @@ tags = {
     'G1_FUEL_TOTAL_PIML': 'Fuelgen1_l',
     'G1_KWH_PIML': None,
     'G1_TOTAL_HOURS_RUN_PIML': 'Tgen1_h',
-    'G2_FUEL_TOTAL_PIML': 'Fuelgen2_l'
+    'G2_FUEL_TOTAL_PIML': 'Fuelgen2_l',
     'G2_KWH_PIML': None,
     'G2_TOTAL_HOURS_RUN_PIML': 'Tgen2_h',
     'G3_FUEL_TOTAL_PIML': 'Fuelgen3_l',
@@ -378,7 +378,7 @@ tags = {
     'Gen2StopSt': None,					# generator 2 stop state
     'Gen2SyncSt': None,					# generator 2 synchronisation state
     'Gen2SyncTimeExcd': None,				# generator 2 sync time exceeded
-    'Gen2TempDeratedSt': None,				# 
+    'Gen2TempDeratedSt': None,				#
     'Gen2ThermOverCur': None,				# generator 2 thermal overcurrent
     'Gen2TimeoutSwchOnBlackBus': None,			#
     'Gen2TimeTillNextService': None,			# generator 2 time until next service
@@ -404,7 +404,7 @@ tags = {
     'Gen3BlackSt': None,				# generator 3 black state
     'Gen3ClosedSt': None,				# generator 3 closed state
     'Gen3CloseFailGCB': None,				# generator 3 generator circuit breaker failed to close
-    'Gen3CommY1Y6': None,				#
+    'Gen3CommY1Y6': None,
     'Gen3CoolDownSt': None,				# generator 3 cool down state
     'Gen3CritAl': None,					# generator 3 critical alarm
     'Gen3DigIOAl': None,				# generator 3 digital I/O alarm
@@ -468,7 +468,7 @@ tags = {
     'Gen3StopSt': None,					# generator 3 stop state
     'Gen3SyncSt': None,					# generator 3 synchronisation state
     'Gen3SyncTimeExcd': None,				# generator 3 sync time exceeded
-    'Gen3TempDeratedSt': None,				# 
+    'Gen3TempDeratedSt': None,
     'Gen3ThermOverCur': None,				# generator 3 thermal overcurrent
     'Gen3TimeoutSwchOnBlackBus': None,			#
     'Gen3TimeTillNextService': None,			# generator 3 time until next service
@@ -558,7 +558,7 @@ tags = {
     'Gen4StopSt': None,					# generator 4 stop state
     'Gen4SyncSt': None,					# generator 4 synchronisation state
     'Gen4SyncTimeExcd': None,				# generator 4 sync time exceeded
-    'Gen4TempDeratedSt': None,				# 
+    'Gen4TempDeratedSt': None,
     'Gen4ThermOverCur': None,				# generator 4 thermal overcurrent
     'Gen4TimeoutSwchOnBlackBus': None,			#
     'Gen4TimeTillNextService': None,			# generator 4 time until next service
@@ -711,15 +711,15 @@ tags = {
 
 def transform(pitag):
     """
-    >>> xform('foobar')
+    >>> transform('foobar')
     Traceback (most recent call last):
       ...
     ValueError: unknown tag foobar
-    >>> xform('StatQact')
+    >>> transform('StatQact')
     Traceback (most recent call last):
       ...
     ValueError: StatQact has no mapping
-    >>> xform('Gen1Pact')
+    >>> transform('Gen1Pact')
     'Pgen1_kVA'
     """
     try:
