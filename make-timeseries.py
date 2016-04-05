@@ -9,6 +9,7 @@
 import pandas as pd
 import sample
 import re
+import sys
 import iso8601
 import argparse
 from datetime import timedelta
@@ -42,6 +43,7 @@ def mkfilename(siteid, month, year, res):
 
 parser = argparse.ArgumentParser(description='Process timestamped data')
 argparser = argparse.ArgumentParser()
+argparser.add_argument("-v", action="store_true")
 argparser.add_argument("-r", type=str, default='1h',
                        help='Resolution n[smh] [default: 1h]')
 argparser.add_argument('--sampling', type=str, default='last',
@@ -68,14 +70,19 @@ siteid = None
 for fname in args.filenames:
     fields = fname.split('_')
     assert len(fields) >= 4, "ill-formed filename %s" % fname
-    pitag = fields[4]
+    pitag = '_'.join(fields[4:-2])
     if siteid is None:
         # first file sets the site ID
         siteid = fields[3]
     else:
         # make sure every CSV file belongs to the same site
         assert siteid == fields[3], 'site %s != %s' % (fields[3], siteid)
-    tag = tags.transform(pitag)
+    try:
+        tag = tags.transform(pitag)
+    except ValueError:
+        if args.v:
+            print >>sys.stderr, "skipping unknown or unmapped tag: %s" % pitag
+        continue
     df = pd.read_csv(fname, parse_dates=True, index_col=0)
     assert df.shape[1] == 1
     df.sort()
@@ -103,4 +110,6 @@ while t < t2:
     s = re.sub(",$", "", s)
     print >>f, s
     t += deltat
+
+print 'closing', filename
 f.close()
