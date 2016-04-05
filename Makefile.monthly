@@ -1,0 +1,25 @@
+# Makefile.monthly -- the Makefile for monthly processing of data
+# Copyright 2016 Ben Elliston
+
+# You can pass V=-v to make to turn on verbosity.
+# Set these correctly before running.
+
+FILES = $(sort $(wildcard $(HOME)/setup/files/R_*.csv))
+START = 2015-05-01
+END = 2015-06-01
+OPTS="--sampling=last"
+CMD=python make-timeseries.py
+
+all: lowres medres highres
+
+highres:
+	@echo $(CMD) -r 5s $(V) $(OPTS) $(START) $(END) ..
+	@$(CMD) -r 5s $(V) $(OPTS) $(START) $(END) $(FILES)
+
+medres:
+	@echo $(CMD) -r 15m $(V) $(OPTS) $(START) $(END) ..
+	@$(CMD) -r 15m $(V) $(OPTS) $(START) $(END) $(FILES)
+
+lowres:
+	@echo $(CMD) -r 1h $(V) $(OPTS) $(START) $(END) ..
+	@$(CMD) -r 1h $(V) $(OPTS) $(START) $(END) $(FILES)
