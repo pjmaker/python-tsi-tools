@@ -716,7 +716,7 @@ tags = {
     'StatWindSpd': 'vwind_m/s',
     'StatWindDir': 'dwind_deg',
     'StatAmbTemp': 'Tamb_degC',
-    'PVCellTemp': 'Tcell_degC',
+    'PvCellTemp': 'Tcell_degC',
     'StatRainfall': 'Rain_mm',
     'StatRelHum': 'Hum_%',
     'StatGHI': 'Gghi_W/m2'
