@@ -709,7 +709,17 @@ tags = {
     'StatUact': None,
     'StatUnderFAl': None,
     'SYSTIMACT': None,
-    'SysTimeAct': None
+    'SysTimeAct': None,
+    ###
+    ### Weather station data
+    ###
+    'StatWindSpd': 'vwind_m/s',
+    'StatWindDir': 'dwind_deg',
+    'StatAmbTemp': 'Tamb_degC',
+    'PVCellTemp': 'Tcell_degC',
+    'StatRainfall': 'Rain_mm',
+    'StatRelHum': 'Hum_%',
+    'StatGHI': 'Gghi_W/m2'
 }
 
 
