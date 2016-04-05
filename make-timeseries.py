@@ -19,7 +19,7 @@ import tags
 PROJECT_NUMBER = 'CAR001'
 PROJECT_NAME = 'SETuP'
 DATA_FREQUENCY = {'60m': 'LOWRES', '1h': 'LOWRES', '15m': 'MEDRES',
-                  '5s': 'HIRES'}
+                  '1m': 'HIRES', '5s': 'HIRES'}
 
 
 def mkfilename(siteid, month, year, res):
