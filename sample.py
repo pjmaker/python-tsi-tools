@@ -95,4 +95,4 @@ def lastsample(df):
         return df.iloc[-1, 0]
 
 switch = {'min': minsample, 'max': maxsample, 'or': orsample,
-          'last': lastsample}
+          'last': lastsample, 'avg': avgsample}
