@@ -85,7 +85,7 @@ for fname in args.filenames:
         continue
     df = pd.read_csv(fname, parse_dates=True, index_col=0)
     assert df.shape[1] == 1
-    df.sort()
+    df.sort_index()
     dataframes.append((tag, df))
 
 t = iso8601.parse_date(args.start)
