@@ -1,0 +1,8 @@
+The following weather data files need to be here:
+
+DC02D_Data_014015_999999999248204.txt
+DC02D_Data_015590_999999999248204.txt
+HM01X_Data_014015_999999999248202.txt
+HM01X_Data_015590_999999999248202.txt
+
+Run `make' to generate the CSV files.
