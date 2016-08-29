@@ -309,7 +309,7 @@ def scale(v, p=1):
     >>> scale(10, 2)
     20
     '''
-    return v*p
+    return v * p
 
 
 def offset(v, o=0):

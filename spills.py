@@ -47,6 +47,7 @@ demand = demand[~nans]
 maxsolar = solar.max()
 nsteps = solar.shape[0]
 
+
 def schedule(load):
     """
     Schedule for a given load. Return the number of gensets required
@@ -54,6 +55,7 @@ def schedule(load):
     """
     numsets = np.ceil(load / args.d)
     return numsets, numsets * args.d * args.m
+
 
 def fuelcons(nsets, load):
     """Return diesel fuel use per half-hour."""

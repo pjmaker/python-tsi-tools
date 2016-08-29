@@ -289,7 +289,7 @@ tags = {
     'Gen1StopSt': None,					# generator 1 stop state
     'Gen1SyncSt': None,					# generator 1 synchronisation state
     'Gen1SyncTimeExcd': None,				# generator 1 sync time exceeded
-    'Gen1TempDeratedSt': None,				# 
+    'Gen1TempDeratedSt': None,
     'Gen1ThermOverCur': None,				# generator 1 thermal overcurrent
     'Gen1TimeoutSwchOnBlackBus': None,			#
     'Gen1TimeTillNextService': None,			# generator 1 time until next service
@@ -710,9 +710,9 @@ tags = {
     'StatUnderFAl': None,
     'SYSTIMACT': None,
     'SysTimeAct': None,
-    ###
-    ### Weather station data
-    ###
+    #
+    # Weather station data
+    #
     'StatWindSpd': 'vwind_m/s',
     'StatWindDir': 'dwind_deg',
     'StatAmbTemp': 'Tamb_degC',
